@@ -21,18 +21,7 @@ Un modelo de lenguaje a gran escala con una interfaz para poder interactuar con 
 
 # 🛫 **Deployment del LLM**
 
-1) Utilizar _pip install -r requirements.txt_ para instalar los requisitos necesarios
-
-2) Doble click en: _ejecutar.bat_
-   - Si aparece el mensaje:
-      * _Serving Flask app 'app'_
-      * _Debug mode: off_
-      * _WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead._
-      * _Running on http://127.0.0.1:5000_
-      * _Press CTRL+C to quit_
-   - Está funcionando el servidor
-
-3) Abrir el navegador e ir al sitio: _localhost:5000_
+https://traductortph.streamlit.app/
 
 ## 🛠️ Herramientas
 
