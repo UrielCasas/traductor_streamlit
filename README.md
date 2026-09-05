@@ -1,7 +1,7 @@
 # **Traductor - Large Language Model**
 Un modelo de lenguaje a gran escala con una interfaz para poder interactuar con la misma, y realizada para presentar como trabajo final en la materia _Técnicas de Procesamiento del Habla_.
 
-# 🏗️ **Estructura del Proyecto**
+## 🏗️ **Estructura del Proyecto**
 ```text
 .
 ├── .devcontainer/
@@ -19,11 +19,11 @@ Un modelo de lenguaje a gran escala con una interfaz para poder interactuar con 
 └── requirements.txt      # Requisitos para utilizar el LLM
 ```
 
-# 🛫 **Deployment del LLM**
+## 🛫 **Deployment del LLM**
 
 https://traductortph.streamlit.app/
 
-# 🛠️ Herramientas
+## 🛠️ Herramientas
 
 [![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)](https://docs.python.org/es/3/)
 [![edge-tts](https://img.shields.io/badge/edge--tts-0078D4?style=flat&logo=microsoftedge&logoColor=white)](https://pypi.org/project/edge-tts/)
@@ -37,7 +37,7 @@ https://traductortph.streamlit.app/
 [![SpeechRecognition](https://img.shields.io/badge/SpeechRecognition-3776AB?style=flat\&logo=python\&logoColor=white)](https://pypi.org/project/SpeechRecognition/)
 
 
-# 👥 **Autores**
+## 👥 **Autores**
 - Arnaldo Antonio Fustet
 - Uriel Maximiano Casas
 
