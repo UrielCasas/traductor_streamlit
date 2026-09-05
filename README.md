@@ -4,18 +4,18 @@ Un modelo de lenguaje a gran escala con una interfaz para poder interactuar con 
 # 🏗️ **Estructura del Proyecto**
 ```text
 .
-├── pruebas/
-│   └── pruebas.md
-│   └── Experimentación y análisis
+├── .devcontainer/
+│   └── devcontainer.json   # Utilizada por Streamlit para crear la interfaz
 │
 ├── static/
 │   └── Se agregan los archivos .mp3 en esta carpeta
 │
-├── DEPLOY.md             # Instrucciones para desplegar la app
+├── versiones/
+│   └── Archivo .py sobre el proceso de evolución del LLM
+│
 ├── README.md             # Información sobre este repositorio
 ├── app.py                # Archivo de python para activar el LLM
-├── ejecutar.bat          # Ejecuta este archivo
-├── index.html            # Página principal con los estilos aplicados
+├── instalar.bat          # Instala las librerias de requirements.txt
 └── requirements.txt      # Requisitos para utilizar el LLM
 ```
 
