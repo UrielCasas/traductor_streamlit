@@ -23,7 +23,7 @@ Un modelo de lenguaje a gran escala con una interfaz para poder interactuar con 
 
 https://traductortph.streamlit.app/
 
-## 🛠️ Herramientas
+# 🛠️ Herramientas
 
 [![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)](https://docs.python.org/es/3/)
 [![edge-tts](https://img.shields.io/badge/edge--tts-0078D4?style=flat&logo=microsoftedge&logoColor=white)](https://pypi.org/project/edge-tts/)
