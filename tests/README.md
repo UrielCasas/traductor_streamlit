@@ -1,1 +1,1 @@
-
+En esta sección hay distintas pruebas realizadas como distintas longitudes de textos ingresadas y comparadas con el modelo de Google, y también prueba de audio, en ambos (texto y audio) se realizó un análisis y una conclusión de cada prueba.
