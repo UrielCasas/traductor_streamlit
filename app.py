@@ -2,10 +2,13 @@ import os
 import asyncio
 import uuid
 import glob
+import time
+from threading import Thread
 import streamlit as st
 import edge_tts
-from deep_translator import GoogleTranslator
+from deep_translator import GoogleTranslator, MyMemoryTranslator
 import speech_recognition as sr
+from streamlit.runtime.scriptrunner import get_script_run_ctx
 
 # Configuración de la página
 st.set_page_config(page_title="Traductor Inteligente", page_icon="🗣️", layout="centered")
@@ -14,13 +17,47 @@ STATIC_DIR = 'static'
 os.makedirs(STATIC_DIR, exist_ok=True)
 
 VOICE_MAPPING = {
-    'en': {'name': 'Inglés', 'male': 'en-US-BrianNeural', 'female': 'en-US-EmmaNeural'},
-    'es': {'name': 'Español', 'male': 'es-AR-TomasNeural', 'female': 'es-MX-DaliaNeural'},
-    'fr': {'name': 'Francés', 'male': 'fr-FR-RemyNeural', 'female': 'fr-FR-DeniseNeural'},
-    'de': {'name': 'Alemán', 'male': 'de-DE-ConradNeural', 'female': 'de-DE-AmalaNeural'},
-    'pt': {'name': 'Portugués', 'male': 'pt-BR-AntonioNeural', 'female': 'pt-BR-FranciscaNeural'},
-    'it': {'name': 'Italiano', 'male': 'it-IT-DiegoNeural', 'female': 'it-IT-ElsaNeural'}
+    'en': {'name': 'Inglés', 'male': 'en-US-BrianNeural', 'female': 'en-US-EmmaNeural', 'mymemory_code': 'en-US'},
+    'es': {'name': 'Español', 'male': 'es-AR-TomasNeural', 'female': 'es-MX-DaliaNeural', 'mymemory_code': 'es-AR'},
+    'fr': {'name': 'Francés', 'male': 'fr-FR-RemyNeural', 'female': 'fr-FR-DeniseNeural', 'mymemory_code': 'fr-FR'},
+    'de': {'name': 'Alemán', 'male': 'de-DE-ConradNeural', 'female': 'de-DE-AmalaNeural', 'mymemory_code': 'de-DE'},
+    'pt': {'name': 'Portugués', 'male': 'pt-BR-AntonioNeural', 'female': 'pt-BR-FranciscaNeural', 'mymemory_code': 'pt-PT'},
+    'it': {'name': 'Italiano', 'male': 'it-IT-DiegoNeural', 'female': 'it-IT-ElsaNeural', 'mymemory_code': 'it-IT'}
 }
+
+# --- SISTEMA DE LIMPIEZA DE ARCHIVOS HUÉRFANOS (BACKGROUND TASK) ---
+# def background_cleaner(interval_seconds=600, max_age_seconds=1800):
+def background_cleaner(interval_seconds=60, max_age_seconds=120):
+    """
+    Revisa periódicamente la carpeta static y elimina archivos viejos de usuarios que se fueron.
+    Por defecto: Ejecuta cada 10 minutos (600s) y borra archivos de más de 30 minutos (1800s).
+    """
+    while True:
+        try:
+            now = time.time()
+            # Patrones para buscar tanto audios generados como temporales de transcripción
+            for pattern in ["traduccion_*.mp3", "temp_*.wav"]:
+                files = glob.glob(os.path.join(STATIC_DIR, pattern))
+                for f in files:
+                    if os.path.exists(f):
+                        # Si el archivo supera el tiempo límite de vida, se elimina
+                        if now - os.path.getmtime(f) > max_age_seconds:
+                            os.remove(f)
+        except Exception as e:
+            print(f"Error en el limpiador en segundo plano: {e}")
+        time.sleep(interval_seconds)
+
+# Inicializa el hilo de fondo una sola vez cuando arranca el servidor
+if "cleaner_started" not in st.session_state:
+    # Usamos st.cache_resource para asegurarnos de que el hilo no se duplique con cada reload
+    @st.cache_resource
+    def start_cleaner_thread():
+        thread = Thread(target=background_cleaner, daemon=True)
+        thread.start()
+        return True
+    
+    start_cleaner_thread()
+    st.session_state.cleaner_started = True
 
 # --- INICIALIZACIÓN DEL ESTADO DE SESIÓN ---
 if 'source_lang' not in st.session_state:
@@ -36,21 +73,30 @@ if 'audio_path' not in st.session_state:
 if 'audio_filename' not in st.session_state:
     st.session_state.audio_filename = None
 
+def get_session_id():
+    """Obtiene el ID único de la sesión de Streamlit para el usuario actual."""
+    ctx = get_script_run_ctx()
+    return ctx.session_id if ctx else "default"
+
 async def generate_audio(text, voice_id, output_file):
     communicate = edge_tts.Communicate(text, voice_id)
     await communicate.save(output_file)
 
 def cleanup_old_audios():
+    """Elimina únicamente los audios generados por la sesión del usuario actual en esta ejecución."""
     try:
-        files = glob.glob(os.path.join(STATIC_DIR, "traduccion_*.mp3"))
+        session_id = get_session_id()
+        files = glob.glob(os.path.join(STATIC_DIR, f"traduccion_{session_id}_*.mp3"))
         for f in files:
-            os.remove(f)
+            if os.path.exists(f):
+                os.remove(f)
     except Exception as e:
         print(f"Error al limpiar audios: {e}")
 
 def transcribe_audio(audio_bytes):
     r = sr.Recognizer()
-    temp_wav = os.path.join(STATIC_DIR, "temp_input.wav")
+    session_id = get_session_id()
+    temp_wav = os.path.join(STATIC_DIR, f"temp_{session_id}.wav")
     with open(temp_wav, "wb") as f:
         f.write(audio_bytes.getbuffer())
         
@@ -68,76 +114,73 @@ def transcribe_audio(audio_bytes):
         if os.path.exists(temp_wav):
             os.remove(temp_wav)
 
+# --- FUNCIÓN CALLBACK PARA INTERCAMBIAR IDIOMAS ---
+def swap_languages():
+    if st.session_state.source_lang != 'auto':
+        old_src = st.session_state.source_lang
+        st.session_state.source_lang = st.session_state.target_lang
+        st.session_state.target_lang = old_src
+    else:
+        st.toast("⚠️ No puedes intercambiar si está seleccionado 'Detectar idioma'.")
+
 # --- INTERFAZ GRÁFICA ---
 st.title("🗣️ Traductor de Texto y Voz")
 
-with st.form("translation_form"):
-    
-    # Selectores de idiomas en columnas con proporciones corregidas [4, 2, 4]
-    col_src, col_btn, col_tgt = st.columns([4, 2, 4])
-    src_options = {'auto': 'Detectar idioma', **{k: v['name'] for k, v in VOICE_MAPPING.items()}}
+col_src, col_btn, col_tgt = st.columns(3)
+src_options = {'auto': 'Detectar idioma', **{k: v['name'] for k, v in VOICE_MAPPING.items()}}
 
-    with col_src:
-        source_lang = st.selectbox(
-            "De:", 
-            options=list(src_options.keys()), 
-            format_func=lambda x: src_options[x],
-            index=list(src_options.keys()).index(st.session_state.source_lang)
-        )
+with col_src:
+    source_lang = st.selectbox(
+        "De:", 
+        options=list(src_options.keys()), 
+        format_func=lambda x: src_options[x],
+        index=list(src_options.keys()).index(st.session_state.source_lang)
+    )
+    st.session_state.source_lang = source_lang
 
-    with col_btn:
-        st.write(" ") # Espacio vertical
-        interchange = st.form_submit_button("🔄", help="Intercambiar idiomas")
+with col_btn:
+    st.write(" ") 
+    st.button("🔄", help="Intercambiar idiomas", on_click=swap_languages)
 
-    with col_tgt:
-        target_lang = st.selectbox(
-            "A:", 
-            options=list(VOICE_MAPPING.keys()), 
-            format_func=lambda x: VOICE_MAPPING[x]['name'],
-            index=list(VOICE_MAPPING.keys()).index(st.session_state.target_lang)
-        )
+with col_tgt:
+    target_lang = st.selectbox(
+        "A:", 
+        options=list(VOICE_MAPPING.keys()), 
+        format_func=lambda x: VOICE_MAPPING[x]['name'],
+        index=list(VOICE_MAPPING.keys()).index(st.session_state.target_lang)
+    )
+    st.session_state.target_lang = target_lang
 
+col_engine, col_gender = st.columns(2)
+with col_engine:
+    translator_engine = st.selectbox("Motor de traducción:", options=["Google Translator", "MyMemory"])
+with col_gender:
     voice_gender = st.selectbox("Voz de salida:", options=['female', 'male'], format_func=lambda x: 'Femenina' if x == 'female' else 'Masculina')
 
-    st.markdown("### Texto a traducir:")
-    
-    # Campo de voz ubicado en el medio de la etiqueta y el cuadro de texto
-    audio_file = st.audio_input("Dictar por voz (opcional):")
-    
-    if audio_file:
-        with st.spinner("Transcribiendo..."):
-            transcription = transcribe_audio(audio_file)
-            if not transcription.startswith("⚠️"):
-                st.session_state.text_input = transcription
-            else:
-                st.error(transcription)
+st.markdown("### Texto a traducir:")
 
-    # Campo de texto definitivo
-    user_query = st.text_area(
-        label="Escribe o edita el texto aquí abajo:",
-        value=st.session_state.text_input, 
-        placeholder="Tu texto aparecerá aquí si dictás, o podés escribir directamente..."
-    ).strip()
+audio_file = st.audio_input("Dictar por voz (opcional):")
 
-    # Botón principal para ejecutar traducción
-    submit_button = st.form_submit_button("Traducir y Escuchar", type="primary")
+if audio_file:
+    with st.spinner("Transcribiendo..."):
+        transcription = transcribe_audio(audio_file)
+        if not transcription.startswith("⚠️"):
+            st.session_state.text_input = transcription
+        else:
+            st.error(transcription)
 
-# --- LÓGICA DE LOS BOTONES DEL FORMULARIO ---
+user_query = st.text_area(
+    label="Escribe o edita el texto aquí abajo:",
+    value=st.session_state.text_input, 
+    placeholder="Tu texto aparecerá aquí si dictás, o podés escribir directamente..."
+).strip()
 
-if interchange:
-    if source_lang != 'auto':
-        st.session_state.source_lang = target_lang
-        st.session_state.target_lang = source_lang
-        st.session_state.text_input = user_query
-        st.rerun()
-    else:
-        st.warning("No puedes intercambiar el idioma si está seleccionado 'Detectar idioma'.")
+st.session_state.text_input = user_query
 
+submit_button = st.button("Traducir y Escuchar", type="primary")
+
+# --- LÓGICA DE PROCESAMIENTO ---
 if submit_button:
-    st.session_state.source_lang = source_lang
-    st.session_state.target_lang = target_lang
-    st.session_state.text_input = user_query
-
     if not user_query:
         st.error("Por favor, ingresa texto o graba un audio primero.")
     else:
@@ -145,13 +188,25 @@ if submit_button:
             try:
                 cleanup_old_audios()
                 
-                # 1. Traducir y persistir en el estado
-                st.session_state.translated_text = GoogleTranslator(source=source_lang, target=target_lang).translate(user_query)
+                if translator_engine == "Google Translator":
+                    st.session_state.translated_text = GoogleTranslator(
+                        source=st.session_state.source_lang, 
+                        target=st.session_state.target_lang
+                    ).translate(user_query)
+                else:
+                    mymemory_src = VOICE_MAPPING.get(st.session_state.source_lang, {}).get('mymemory_code', 'auto') if st.session_state.source_lang != 'auto' else 'auto'
+                    mymemory_tgt = VOICE_MAPPING[st.session_state.target_lang]['mymemory_code']
+                    
+                    st.session_state.translated_text = MyMemoryTranslator(
+                        source=mymemory_src, 
+                        target=mymemory_tgt
+                    ).translate(user_query)
                 
-                # 2. Generar Audio y persistir rutas
-                selected_voice = VOICE_MAPPING[target_lang][voice_gender]
+                selected_voice = VOICE_MAPPING[st.session_state.target_lang][voice_gender]
+                session_id = get_session_id()
                 unique_id = uuid.uuid4().hex[:6]
-                st.session_state.audio_filename = f"traduccion_{unique_id}.mp3"
+                
+                st.session_state.audio_filename = f"traduccion_{session_id}_{unique_id}.mp3"
                 st.session_state.audio_path = os.path.join(STATIC_DIR, st.session_state.audio_filename)
                 
                 asyncio.run(generate_audio(st.session_state.translated_text, selected_voice, st.session_state.audio_path))
@@ -159,7 +214,7 @@ if submit_button:
             except Exception as e:
                 st.error(f"Error en el proceso: {str(e)}")
 
-# --- BLOQUE DE RESULTADOS (FUERA DEL FORMULARIO PARA EVITAR RESETEOS) ---
+# --- BLOQUE DE RESULTADOS ---
 if st.session_state.translated_text and st.session_state.audio_path:
     st.write("---") 
     st.success("¡Traducción completada!")
@@ -167,7 +222,6 @@ if st.session_state.translated_text and st.session_state.audio_path:
     st.subheader("Texto Traducido:")
     st.info(st.session_state.translated_text)
     
-    # Botón de copiar al portapapeles mediante JS
     js_button = f"""
     <script>
     function copyText() {{
@@ -186,12 +240,11 @@ if st.session_state.translated_text and st.session_state.audio_path:
         📋 Copiar Texto Traducido
     </button>
     """
-    st.components.v1.html(js_button, height=45)
+    st.iframe(js_button, height=45)
 
     st.subheader("Audio de Salida:")
     st.audio(st.session_state.audio_path, format="audio/mp3")
     
-    # Botón de descarga de Streamlit nativo leyendo de la sesión persistente
     with open(st.session_state.audio_path, "rb") as file:
         st.download_button(
             label="📥 Descargar Audio MP3",
