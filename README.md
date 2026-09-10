@@ -1,39 +1,33 @@
 # **Traductor - Large Language Model**
 Un modelo de lenguaje a gran escala con una interfaz para poder interactuar con la misma, y realizada para presentar como trabajo final en la materia _Técnicas de Procesamiento del Habla_.
 
+La app solamente esta desplegado en _Streamlit_ para poder interactuar con el LLM basado en los motores de _Google Translator_ (de Google) y MyMemory (de Microsoft).
+
 ## 🏗️ **Estructura del Proyecto**
 ```text
 .
 ├── .devcontainer/
 │   └── devcontainer.json   # Utilizada por Streamlit para crear la interfaz
 │
-├── static/
-│   └── Se agregan los archivos .mp3 en esta carpeta
+├── static/                 # Se agregan los archivos .mp3 en esta carpeta
 │
-├── tests/
+├── tests/                  # Experimentación y análisis de los modelos
 │   ├── videos/
 │   │    └── Video del LLM como experimentación
-│   ├── texto_corto.md    # Experimentación y análisis del modelo
-│   └── texto_largo.md    # Experimentación y análisis del modelo
+│   ├── texto_corto.md
+│   └── texto_largo.md
 │
-├── versiones/
-│   └── Archivo .py sobre el proceso de evolución del LLM
+├── versiones/              # Archivos .py sobre la evolución del LLM
 │
-├── README.md             # Información sobre el repositorio
-├── app.py                # Archivo de python para activar el LLM
-├── instalar.bat          # Instala las librerias de requirements.txt
-└── requirements.txt      # Requisitos para utilizar el LLM
+├── README.md               # Información sobre el repositorio
+├── app.py                  # Archivo de python donde se encuentra el LLM
+├── instalar.bat            # Instala las librerias de requirements.txt
+└── requirements.txt        # Requisitos (librerias) para utilizar el LLM
 ```
 
 ## 🛫 **Deployment del LLM**
 
 https://traductortph.streamlit.app/
-
-<!--## 🔎 **Testeo Local**
-```
-
-```
-Luego accede a http-->
 
 ## 🛠️ Herramientas
 
