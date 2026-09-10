@@ -1,1 +1,3 @@
-### En esta sección hay distintas pruebas realizadas como distintas longitudes de textos ingresadas y comparadas con el modelo de Google, como también pruebas de audio. En ambos textos se realizó un análisis y conclusión del experimento realizado.
+### En esta sección hay distintas pruebas realizadas como distintas longitudes de textos ingresadas y comparadas con el modelo de Google, como también pruebas de audio.
+
+### En ambos textos se realizó un análisis y conclusión del experimento realizado.
