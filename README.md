@@ -27,7 +27,7 @@ La app solamente esta desplegado en _Streamlit_ para poder interactuar con el LL
 
 ## 🛫 **Deployment del LLM**
 
-https://traductortph.streamlit.app/
+Enlace a la app desplegada en Streamlit: https://traductortph.streamlit.app/
 
 ## 🛠️ Herramientas
 
