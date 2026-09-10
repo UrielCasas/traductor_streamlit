@@ -1,1 +1,1 @@
-### En esta sección hay distintas pruebas realizadas como distintas longitudes de textos ingresadas y comparadas con el modelo de Google, y también se realizaron pruebas de audio, en ambos (texto y audio) se realizó un análisis y una conclusión de cada prueba.
+### En esta sección hay distintas pruebas realizadas como distintas longitudes de textos ingresadas y comparadas con el modelo de Google y de Microsoft, como también pruebas de audio. En ambos (texto y audio) se realizó un análisis y conclusión de cada experimento realizado.
