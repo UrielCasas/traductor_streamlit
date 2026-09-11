@@ -20,7 +20,7 @@ La app solamente esta desplegado en _Streamlit_ para poder interactuar con el LL
 ├── versiones/              # Archivos .py sobre la evolución del LLM
 │
 ├── README.md               # Información sobre el repositorio
-├── app.py                  # Archivo de python donde se encuentra el LLM
+├── app.py                  # Archivo de python que consume un LLM
 ├── instalar.bat            # Instala las librerias de requirements.txt
 └── requirements.txt        # Requisitos (librerias) para utilizar el LLM
 ```
