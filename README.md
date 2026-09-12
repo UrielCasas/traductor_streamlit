@@ -1,5 +1,5 @@
 # **Traductor - Large Language Model**
-Trabajo final para la materia _Técnicas de Procesamiento del Habla_: traductor desarrollado en Python con Streamlit usando edge_tts, deep_translator.
+Trabajo final para la materia _Técnicas de Procesamiento del Habla_: traductor desarrollado en Python con Streamlit usando edge_tts y deep_translator.
 
 La app solamente esta desplegado en _Streamlit_ para poder interactuar con el LLM basado en los motores de _Google Translator_ (de Google) y MyMemory (de Microsoft).
 
